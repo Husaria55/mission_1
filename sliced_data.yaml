@@ -1,0 +1,8 @@
+# sliced_data.yaml
+path: ./nomad_yolo_dataset/sliced_data # The root folder of your new sliced dataset
+train: images/train                    # Path to the sliced training images
+val: images/val                        # Path to the sliced validation images
+
+# Classes
+names:
+  0: person

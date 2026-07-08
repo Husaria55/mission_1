@@ -1,0 +1,8 @@
+# data.yaml
+path: ./ # Relative path to your dataset root
+train: images/train # Path to your flattened training images (Actors 91-98)
+val: images/val # Path to your flattened validation images (Actors 99-100)
+
+# Classes
+names:
+  0: person
