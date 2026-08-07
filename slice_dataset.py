@@ -3,12 +3,12 @@ import cv2
 import random
 
 # --- Configuration ---
-input_images_dir = 'nomad_yolo_dataset/images/val'
-input_labels_dir = 'nomad_yolo_dataset/labels/val'
-out_images_dir = 'nomad_yolo_dataset/sliced_data/images/val'
-out_labels_dir = 'nomad_yolo_dataset/sliced_data/labels/val'
-SLICE_SIZE = 1024
-EMPTY_KEEP_PROB = 0.15
+input_images_dir = r"C:\Users\Bartek\Desktop\SUAV\nomad_yolo_dataset\images\train"
+input_labels_dir = r"C:\Users\Bartek\Desktop\SUAV\nomad_yolo_dataset\labels\train"
+out_images_dir = r"C:\Users\Bartek\Desktop\SUAV\nomad_yolo_dataset_512\sliced_data\images\train"
+out_labels_dir = r"C:\Users\Bartek\Desktop\SUAV\nomad_yolo_dataset_512\sliced_data\labels\train"
+SLICE_SIZE = 512
+EMPTY_KEEP_PROB = 0.01
 
 # Create output directories
 os.makedirs(out_images_dir, exist_ok=True)

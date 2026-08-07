@@ -3,10 +3,11 @@ import os
 import re
 
 # --- Configuration ---
-json_file_path = 'annotations.json'
-output_labels_dir = 'labels'
-allowed_actors = range(91, 101)    # Actors 91 through 100
-allowed_altitudes = ['50', '70']   # 50m and 70m altitudes
+json_file_path = r"C:\Users\Bartek\Desktop\IMAV\mission_1\annotations.json"
+output_labels_dir = r"C:\Users\Bartek\Desktop\IMAV\mission_1\nomad_yolo_dataset_50m\train\labels"
+allowed_actors = range(1, 101)    # Actors 1 through 100
+allowed_altitudes = ['50']        # 50m altitude
+min_visibility = 50               # Minimum visibility percentage (0-100) to keep the box. Adjust as needed.
 
 # Create the output directory if it doesn't exist
 os.makedirs(output_labels_dir, exist_ok=True)
@@ -16,10 +17,11 @@ print(f"Loading {json_file_path}...")
 with open(json_file_path, 'r') as f:
     data = json.load(f)
 
-print("Processing annotations with Actor and Altitude filters...")
-processed_count = 0
+print("Processing annotations with Actor, Altitude, and Visibility filters...")
+processed_images_count = 0
 skipped_actor_count = 0
 skipped_altitude_count = 0
+skipped_boxes_visibility_count = 0  # Counter for filtered bounding boxes
 
 for image_data in data:
     file_name = image_data['file_name']
@@ -44,7 +46,7 @@ for image_data in data:
         skipped_altitude_count += 1
         continue
         
-    # If it passes both filters, process the bounding boxes
+    # If it passes both image-level filters, process the bounding boxes
     img_width = image_data['width']
     img_height = image_data['height']
     annotations = image_data.get('annotations', [])
@@ -53,9 +55,18 @@ for image_data in data:
     txt_filename = os.path.splitext(file_name)[0] + '.txt'
     txt_filepath = os.path.join(output_labels_dir, txt_filename)
     
+    valid_boxes_found = False
+    
     # Open the text file and write the normalized YOLO coordinates
     with open(txt_filepath, 'w') as txt_file:
         for ann in annotations:
+            # 3. Filter by Visibility
+            # Visibility is a string in your JSON (e.g., "100"), cast to int. Default to 100 if missing.
+            visibility = int(ann.get('visibility', '100'))
+            if visibility < min_visibility:
+                skipped_boxes_visibility_count += 1
+                continue  # Skip this specific bounding box
+                
             # NOMAD format: [x_min, y_min, box_width, box_height]
             x_min, y_min, box_w, box_h = ann['bbox']
             category_id = ann['category_id'] # 0 for person
@@ -74,10 +85,15 @@ for image_data in data:
             
             # Write line: <class> <x_center> <y_center> <width> <height>
             txt_file.write(f"{category_id} {x_center:.6f} {y_center:.6f} {norm_width:.6f} {norm_height:.6f}\n")
+            valid_boxes_found = True
             
-    processed_count += 1
+    # Optional clean-up: if an image had boxes but ALL were filtered out due to low visibility, 
+    # it leaves an empty .txt file. YOLO handles empty .txt files fine (treats as background images),
+    # but we still count the image as processed.
+    processed_images_count += 1
 
-print(f"Done! Successfully generated {processed_count} YOLO label files.")
-print(f"Skipped {skipped_actor_count} images (Actors outside 91-100).")
-print(f"Skipped {skipped_altitude_count} images (Not at 50m or 70m).")
+print(f"Done! Successfully generated {processed_images_count} YOLO label files.")
+print(f"Skipped {skipped_actor_count} images (Actors outside 1-100).")
+print(f"Skipped {skipped_altitude_count} images (Not at 50m).")
+print(f"Filtered out {skipped_boxes_visibility_count} heavily occluded bounding boxes (Visibility < {min_visibility}%).")
 print(f"Check the '{output_labels_dir}' folder for your .txt files.")
